@@ -1,25 +1,34 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import PulseButton from '../../components/PulseButton'
-import ProgressIndicator from '../../components/ProgressIndicator'
 
 export default function OTPScreen({ phoneNumber, onNext, onBack }) {
     const [otp, setOtp] = useState(['', '', '', '', '', ''])
     const [timer, setTimer] = useState(60)
     const [canResend, setCanResend] = useState(false)
+    const inputRefs = useRef([])
 
     useEffect(() => {
-        if (timer > 0) {
-            const interval = setInterval(() => {
-                setTimer(t => t - 1)
-            }, 1000)
-            return () => clearInterval(interval)
-        } else {
-            setCanResend(true)
-        }
-    }, [timer])
+        // Focus first input on mount
+        inputRefs.current[0]?.focus()
+
+        // Start countdown timer
+        const interval = setInterval(() => {
+            setTimer((prev) => {
+                if (prev <= 1) {
+                    setCanResend(true)
+                    clearInterval(interval)
+                    return 0
+                }
+                return prev - 1
+            })
+        }, 1000)
+
+        return () => clearInterval(interval)
+    }, [])
 
     const handleChange = (index, value) => {
-        if (value.length > 1) return
+        // Only allow digits
+        if (value && !/^\d$/.test(value)) return
 
         const newOtp = [...otp]
         newOtp[index] = value
@@ -27,87 +36,106 @@ export default function OTPScreen({ phoneNumber, onNext, onBack }) {
 
         // Auto-focus next input
         if (value && index < 5) {
-            document.getElementById(`otp-${index + 1}`).focus()
+            inputRefs.current[index + 1]?.focus()
         }
     }
 
     const handleKeyDown = (index, e) => {
+        // Handle backspace
         if (e.key === 'Backspace' && !otp[index] && index > 0) {
-            document.getElementById(`otp-${index - 1}`).focus()
+            inputRefs.current[index - 1]?.focus()
         }
+    }
+
+    const handlePaste = (e) => {
+        e.preventDefault()
+        const pastedData = e.clipboardData.getData('text').slice(0, 6)
+        if (!/^\d+$/.test(pastedData)) return
+
+        const newOtp = [...otp]
+        pastedData.split('').forEach((digit, index) => {
+            if (index < 6) newOtp[index] = digit
+        })
+        setOtp(newOtp)
+
+        // Focus last filled input or next empty
+        const lastIndex = Math.min(pastedData.length, 5)
+        inputRefs.current[lastIndex]?.focus()
+    }
+
+    const handleResend = () => {
+        // Reset timer and OTP
+        setTimer(60)
+        setCanResend(false)
+        setOtp(['', '', '', '', '', ''])
+        inputRefs.current[0]?.focus()
+
+        // In production, trigger actual OTP resend
+        console.log('Resending OTP to:', phoneNumber)
     }
 
     const handleContinue = () => {
         const otpValue = otp.join('')
         if (otpValue.length === 6) {
+            // In production, verify OTP with backend
+            // For demo, accept any 6-digit code
             onNext({ otp: otpValue })
         }
-    }
-
-    const handleResend = () => {
-        setTimer(60)
-        setCanResend(false)
-        // In production, trigger actual OTP resend here
-        console.log('Resending OTP to:', phoneNumber)
     }
 
     const isComplete = otp.every(digit => digit !== '')
 
     return (
         <div className="onboarding-screen animate-fade-in">
-            <div className="screen-container">
-                <ProgressIndicator currentStep={2} totalSteps={6} />
+            <button className="back-button" onClick={onBack}>←</button>
 
-                <button className="back-button" onClick={onBack}>←</button>
+            <div className="onboarding-content">
+                <div className="onboarding-icon">📱</div>
+                <h1 className="onboarding-title">Enter OTP</h1>
+                <p className="onboarding-subtitle">
+                    We sent a 6-digit code to {phoneNumber}
+                </p>
 
-                <div className="screen-header">
-                    <h1 className="screen-title">Enter OTP</h1>
-                    <p className="screen-subtitle">
-                        We sent a 6-digit code to {phoneNumber}
-                    </p>
+                <div className="otp-container">
+                    {otp.map((digit, index) => (
+                        <input
+                            key={index}
+                            ref={(el) => (inputRefs.current[index] = el)}
+                            type="text"
+                            inputMode="numeric"
+                            maxLength={1}
+                            value={digit}
+                            onChange={(e) => handleChange(index, e.target.value)}
+                            onKeyDown={(e) => handleKeyDown(index, e)}
+                            onPaste={handlePaste}
+                            className="otp-input"
+                        />
+                    ))}
                 </div>
 
-                <div className="screen-content">
-                    <div className="otp-container">
-                        {otp.map((digit, index) => (
-                            <input
-                                key={index}
-                                id={`otp-${index}`}
-                                type="tel"
-                                maxLength={1}
-                                value={digit}
-                                onChange={(e) => handleChange(index, e.target.value)}
-                                onKeyDown={(e) => handleKeyDown(index, e)}
-                                className="otp-input"
-                                autoFocus={index === 0}
-                            />
-                        ))}
-                    </div>
-
-                    <div className="resend-container">
-                        {canResend ? (
-                            <button className="resend-button" onClick={handleResend}>
-                                Resend OTP
-                            </button>
-                        ) : (
-                            <p className="timer-text">
-                                Resend code in {timer}s
-                            </p>
-                        )}
-                    </div>
+                <div className="otp-timer">
+                    {canResend ? (
+                        <button className="resend-button" onClick={handleResend}>
+                            Resend Code
+                        </button>
+                    ) : (
+                        <span className="timer-text">
+                            Resend code in {timer}s
+                        </span>
+                    )}
                 </div>
+            </div>
 
-                <div className="screen-footer">
-                    <PulseButton
-                        variant="primary"
-                        size="large"
-                        fullWidth
-                        onClick={handleContinue}
-                        disabled={!isComplete}
-                    >
-                        Continue
-                    </PulseButton>
-                </div>
+            <div className="onboarding-footer">
+                <PulseButton
+                    variant="primary"
+                    size="large"
+                    fullWidth
+                    onClick={handleContinue}
+                    disabled={!isComplete}
+                >
+                    Continue
+                </PulseButton>
             </div>
         </div>
     )
