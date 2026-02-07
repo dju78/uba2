@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import ProgressIndicator from '../../components/ProgressIndicator'
+import { verifyOTP, resendOTP } from '../../lib/otp'
 import PulseInput from '../../components/PulseInput'
 import PulseButton from '../../components/PulseButton'
 
 export default function OTPScreen({ phoneNumber, onNext, onBack }) {
     const [otp, setOtp] = useState('')
+    const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const [timer, setTimer] = useState(60)
     const [canResend, setCanResend] = useState(false)
@@ -20,21 +22,47 @@ export default function OTPScreen({ phoneNumber, onNext, onBack }) {
         }
     }, [timer])
 
-    const handleContinue = () => {
+    const handleContinue = async () => {
         if (otp.length !== 6) {
             setError('Please enter the 6-digit code')
             return
         }
 
-        // In production, verify OTP with backend
+        setLoading(true)
         setError('')
-        onNext({ otp })
+
+        const result = await verifyOTP(phoneNumber, otp, 'registration')
+
+        if (result.success) {
+            onNext({ otp, otpVerified: true })
+        } else {
+            setError(result.error || 'Invalid OTP')
+            if (result.attemptsLeft !== undefined) {
+                setError(`Invalid OTP. ${result.attemptsLeft} attempts remaining.`)
+            }
+        }
+
+        setLoading(false)
     }
 
-    const handleResend = () => {
-        setTimer(60)
-        setCanResend(false)
-        // In production, call resend OTP API
+    const handleResend = async () => {
+        setLoading(true)
+        setError('')
+
+        const result = await resendOTP(phoneNumber, 'registration')
+
+        if (result.success) {
+            setTimer(60)
+            setCanResend(false)
+            // Show the new OTP in dev mode
+            if (result.otpCode) {
+                console.log('🔐 DEV MODE - New OTP:', result.otpCode)
+            }
+        } else {
+            setError(result.error || 'Failed to resend OTP')
+        }
+
+        setLoading(false)
     }
 
     const handleChange = (e) => {
@@ -70,13 +98,21 @@ export default function OTPScreen({ phoneNumber, onNext, onBack }) {
                         error={error}
                         icon="🔐"
                         maxLength={6}
+                        disabled={loading}
                         autoFocus
                     />
 
                     <div className="onboarding-info">
                         {canResend ? (
-                            <span onClick={handleResend} style={{ cursor: 'pointer', color: 'var(--color-primary)' }}>
-                                Resend code
+                            <span
+                                onClick={handleResend}
+                                style={{
+                                    cursor: loading ? 'not-allowed' : 'pointer',
+                                    color: 'var(--color-primary)',
+                                    opacity: loading ? 0.5 : 1
+                                }}
+                            >
+                                {loading ? 'Sending...' : 'Resend code'}
                             </span>
                         ) : (
                             <span>Resend code in {timer}s</span>
@@ -91,9 +127,9 @@ export default function OTPScreen({ phoneNumber, onNext, onBack }) {
                     size="large"
                     fullWidth
                     onClick={handleContinue}
-                    disabled={otp.length !== 6}
+                    disabled={loading || otp.length !== 6}
                 >
-                    Verify
+                    {loading ? 'Verifying...' : 'Verify'}
                 </PulseButton>
                 <div className="onboarding-back" onClick={onBack}>
                     ← Back
