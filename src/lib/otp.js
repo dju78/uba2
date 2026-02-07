@@ -60,6 +60,14 @@ export const sendOTP = async (phoneNumber, purpose = 'registration') => {
             }
         }
 
+        // Convert Nigerian phone to international format
+        // 08012345678 -> 2348012345678
+        const internationalPhone = phoneNumber.startsWith('0')
+            ? '234' + phoneNumber.substring(1)
+            : phoneNumber
+
+        console.log(`📱 Sending SMS to: ${internationalPhone}`)
+
         // Send real SMS via Termii
         try {
             const smsResponse = await fetch(`${termiiApiUrl}/api/sms/send`, {
@@ -68,7 +76,7 @@ export const sendOTP = async (phoneNumber, purpose = 'registration') => {
                     'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                    to: phoneNumber,
+                    to: internationalPhone,
                     from: senderId,
                     sms: `Your UBA Pulse verification code is: ${otpCode}. Valid for 10 minutes. Do not share this code.`,
                     type: 'plain',
@@ -79,27 +87,39 @@ export const sendOTP = async (phoneNumber, purpose = 'registration') => {
 
             const result = await smsResponse.json()
 
+            console.log('📡 Termii API Response:', result)
+
             if (result.message_id || result.code === 'ok') {
                 console.log('✅ SMS sent successfully via Termii')
+                console.log(`Message ID: ${result.message_id}`)
                 return {
                     success: true,
                     expiresIn: 600,
                     message: 'OTP sent to your phone number'
                 }
             } else {
-                console.error('Termii API error:', result)
-                // Still return success since OTP is in database, just log the SMS failure
-                console.log('⚠️ SMS failed, but OTP is in database. Code:', otpCode)
+                console.error('❌ Termii API error:', result)
+                // Show OTP in console for testing when SMS fails
+                console.log('⚠️ SMS FAILED - Here is your OTP for testing:')
+                console.log(`Code: ${otpCode}`)
+                console.log(`Phone: ${phoneNumber}`)
+                console.log('---')
+
                 return {
                     success: true,
                     expiresIn: 600,
                     otpCode: otpCode, // Return code if SMS fails
-                    warning: 'SMS delivery may be delayed'
+                    warning: `SMS delivery failed: ${result.message || 'Unknown error'}`
                 }
             }
         } catch (smsError) {
-            console.error('SMS sending error:', smsError)
-            // Return success with code since it's in database
+            console.error('❌ SMS sending error:', smsError)
+            // Show OTP in console for testing
+            console.log('⚠️ SMS SERVICE ERROR - Here is your OTP for testing:')
+            console.log(`Code: ${otpCode}`)
+            console.log(`Phone: ${phoneNumber}`)
+            console.log('---')
+
             return {
                 success: true,
                 expiresIn: 600,
