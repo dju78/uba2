@@ -308,44 +308,43 @@ export default function LeoChat() {
                     </>
                 )}
             </div>
-        </div>
 
-                {
-        messages.length <= 1 && (
-            <div className="quick-actions-container">
-                <p className="quick-actions-label">Quick actions:</p>
-                <div className="quick-actions">
-                    {quickActions.map(action => (
-                        <button
-                            key={action.id}
-                            className="quick-action-chip"
-                            onClick={() => handleQuickAction(action)}
-                        >
-                            <span>{action.icon}</span>
-                            <span>{action.text}</span>
-                        </button>
-                    ))}
-                </div>
+            {
+                messages.length <= 1 && (
+                    <div className="quick-actions-container">
+                        <p className="quick-actions-label">Quick actions:</p>
+                        <div className="quick-actions">
+                            {quickActions.map(action => (
+                                <button
+                                    key={action.id}
+                                    className="quick-action-chip"
+                                    onClick={() => handleQuickAction(action)}
+                                >
+                                    <span>{action.icon}</span>
+                                    <span>{action.text}</span>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )
+            }
+
+            <div className="chat-input-container">
+                <PulseInput
+                    type="text"
+                    placeholder="Ask Leo anything..."
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+                />
+                <button
+                    className="send-button"
+                    onClick={() => handleSend()}
+                    disabled={!inputText.trim()}
+                >
+                    ➤
+                </button>
             </div>
-        )
-    }
-
-    <div className="chat-input-container">
-        <PulseInput
-            type="text"
-            placeholder="Ask Leo anything..."
-            value={inputText}
-            onChange={(e) => setInputText(e.target.value)}
-            onKeyPress={(e) => e.key === 'Enter' && handleSend()}
-        />
-        <button
-            className="send-button"
-            onClick={() => handleSend()}
-            disabled={!inputText.trim()}
-        >
-            ➤
-        </button>
-    </div>
-            </div >
-            )
+        </div>
+    )
 }
