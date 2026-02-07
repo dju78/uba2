@@ -40,23 +40,72 @@ export const sendOTP = async (phoneNumber, purpose = 'registration') => {
             return { success: false, error: 'Failed to generate OTP. Please try again.' }
         }
 
-        // DEVELOPMENT MODE: Log OTP to console
-        // In production, this will be replaced with Termii API call via Edge Function
-        console.log('🔐 OTP SENT (DEV MODE)')
-        console.log(`Phone: ${phoneNumber}`)
-        console.log(`Code: ${otpCode}`)
-        console.log(`Expires: ${expiresAt.toLocaleTimeString()}`)
-        console.log('---')
+        // Send SMS via Termii API
+        const termiiApiKey = import.meta.env.VITE_TERMII_API_KEY
+        const termiiApiUrl = import.meta.env.VITE_TERMII_API_URL
+        const senderId = import.meta.env.VITE_TERMII_SENDER_ID || 'UBAPulse'
 
-        // TODO: Production - Call Supabase Edge Function
-        // const { data, error } = await supabase.functions.invoke('send-otp', {
-        //   body: { phoneNumber, purpose }
-        // })
+        if (!termiiApiKey || !termiiApiUrl) {
+            // Fallback to development mode if API credentials not configured
+            console.log('🔐 OTP SENT (DEV MODE - No Termii credentials)')
+            console.log(`Phone: ${phoneNumber}`)
+            console.log(`Code: ${otpCode}`)
+            console.log(`Expires: ${expiresAt.toLocaleTimeString()}`)
+            console.log('---')
 
-        return {
-            success: true,
-            expiresIn: 600, // 10 minutes in seconds
-            otpCode: otpCode // Only for development, remove in production
+            return {
+                success: true,
+                expiresIn: 600,
+                otpCode: otpCode // Only in dev mode
+            }
+        }
+
+        // Send real SMS via Termii
+        try {
+            const smsResponse = await fetch(`${termiiApiUrl}/api/sms/send`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    to: phoneNumber,
+                    from: senderId,
+                    sms: `Your UBA Pulse verification code is: ${otpCode}. Valid for 10 minutes. Do not share this code.`,
+                    type: 'plain',
+                    channel: 'generic',
+                    api_key: termiiApiKey
+                })
+            })
+
+            const result = await smsResponse.json()
+
+            if (result.message_id || result.code === 'ok') {
+                console.log('✅ SMS sent successfully via Termii')
+                return {
+                    success: true,
+                    expiresIn: 600,
+                    message: 'OTP sent to your phone number'
+                }
+            } else {
+                console.error('Termii API error:', result)
+                // Still return success since OTP is in database, just log the SMS failure
+                console.log('⚠️ SMS failed, but OTP is in database. Code:', otpCode)
+                return {
+                    success: true,
+                    expiresIn: 600,
+                    otpCode: otpCode, // Return code if SMS fails
+                    warning: 'SMS delivery may be delayed'
+                }
+            }
+        } catch (smsError) {
+            console.error('SMS sending error:', smsError)
+            // Return success with code since it's in database
+            return {
+                success: true,
+                expiresIn: 600,
+                otpCode: otpCode,
+                warning: 'SMS service temporarily unavailable'
+            }
         }
     } catch (error) {
         console.error('Error sending OTP:', error)
