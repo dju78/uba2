@@ -1,12 +1,10 @@
 import { useState } from 'react'
 import ProgressIndicator from '../../components/ProgressIndicator'
-import { sendOTP } from '../../lib/otp'
 import PulseInput from '../../components/PulseInput'
 import PulseButton from '../../components/PulseButton'
 
 export default function PhoneNumberScreen({ onNext }) {
     const [phoneNumber, setPhoneNumber] = useState('')
-    const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
 
     const validatePhoneNumber = (number) => {
@@ -15,33 +13,19 @@ export default function PhoneNumberScreen({ onNext }) {
         return regex.test(number)
     }
 
-    const handleContinue = async () => {
-        if (phoneNumber.length !== 11) {
-            setError('Please enter a valid 11-digit phone number')
+    const handleContinue = () => {
+        if (!phoneNumber) {
+            setError('Please enter your phone number')
             return
         }
 
-        if (!/^0[789][01]\d{8}$/.test(phoneNumber)) {
+        if (!validatePhoneNumber(phoneNumber)) {
             setError('Please enter a valid Nigerian phone number')
             return
         }
 
-        setLoading(true)
         setError('')
-
-        const result = await sendOTP(phoneNumber, 'registration')
-
-        if (result.success) {
-            // In development, show the OTP code
-            if (result.otpCode) {
-                console.log('🔐 DEV MODE - Your OTP:', result.otpCode)
-            }
-            onNext({ phoneNumber })
-        } else {
-            setError(result.error || 'Failed to send OTP. Please try again.')
-        }
-
-        setLoading(false)
+        onNext({ phoneNumber })
     }
 
     const handleChange = (e) => {
@@ -77,7 +61,6 @@ export default function PhoneNumberScreen({ onNext }) {
                         error={error}
                         icon="📱"
                         maxLength={11}
-                        disabled={loading}
                         autoFocus
                     />
 
@@ -94,9 +77,9 @@ export default function PhoneNumberScreen({ onNext }) {
                     size="large"
                     fullWidth
                     onClick={handleContinue}
-                    disabled={loading || phoneNumber.length !== 11}
+                    disabled={phoneNumber.length !== 11}
                 >
-                    {loading ? 'Sending OTP...' : 'Continue'}
+                    Continue
                 </PulseButton>
             </div>
         </div>
