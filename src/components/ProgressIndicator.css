@@ -1,0 +1,27 @@
+.progress-indicator {
+    width: 100%;
+    margin-bottom: var(--spacing-xl);
+}
+
+.progress-indicator__bar {
+    width: 100%;
+    height: 4px;
+    background: var(--color-bg-tertiary);
+    border-radius: var(--radius-full);
+    overflow: hidden;
+    margin-bottom: var(--spacing-sm);
+}
+
+.progress-indicator__fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--color-primary) 0%, var(--color-primary-light) 100%);
+    border-radius: var(--radius-full);
+    transition: width 0.3s ease;
+}
+
+.progress-indicator__text {
+    font-size: var(--text-sm);
+    color: var(--color-text-secondary);
+    text-align: center;
+    font-weight: var(--font-medium);
+}

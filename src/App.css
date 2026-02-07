@@ -1,0 +1,21 @@
+.app {
+    min-height: 100vh;
+    background-color: var(--color-bg-primary);
+}
+
+/* Mobile-First Container */
+.screen-container {
+    max-width: 480px;
+    margin: 0 auto;
+    min-height: 100vh;
+    background-color: var(--color-bg-primary);
+    position: relative;
+    overflow-x: hidden;
+}
+
+/* Safe Area for Mobile */
+.safe-area {
+    padding: var(--spacing-md);
+    padding-top: max(var(--spacing-md), env(safe-area-inset-top));
+    padding-bottom: max(var(--spacing-md), env(safe-area-inset-bottom));
+}

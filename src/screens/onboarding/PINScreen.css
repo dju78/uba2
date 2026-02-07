@@ -1,0 +1,23 @@
+.pin-input-container {
+    position: relative;
+}
+
+.pin-dots {
+    display: flex;
+    justify-content: center;
+    gap: var(--spacing-md);
+    margin-top: var(--spacing-lg);
+}
+
+.pin-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--color-bg-tertiary);
+    transition: all var(--transition-base);
+}
+
+.pin-dot--filled {
+    background: var(--color-primary);
+    transform: scale(1.2);
+}

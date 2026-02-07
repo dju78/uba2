@@ -1,0 +1,118 @@
+.pulse-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--spacing-sm);
+    font-family: var(--font-primary);
+    font-weight: var(--font-semibold);
+    border: none;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-base);
+    position: relative;
+    overflow: hidden;
+}
+
+.pulse-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.pulse-btn:active::before {
+    width: 300px;
+    height: 300px;
+}
+
+/* Variants */
+.pulse-btn--primary {
+    background: linear-gradient(135deg, var(--color-primary) 0%, var(--color-primary-dark) 100%);
+    color: white;
+}
+
+.pulse-btn--primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-glow);
+}
+
+.pulse-btn--secondary {
+    background: var(--color-bg-card);
+    color: var(--color-text-primary);
+    border: 1px solid var(--glass-border);
+}
+
+.pulse-btn--secondary:hover:not(:disabled) {
+    background: var(--color-bg-card-hover);
+}
+
+.pulse-btn--outline {
+    background: transparent;
+    color: var(--color-primary);
+    border: 2px solid var(--color-primary);
+}
+
+.pulse-btn--outline:hover:not(:disabled) {
+    background: var(--color-primary);
+    color: white;
+}
+
+.pulse-btn--ghost {
+    background: transparent;
+    color: var(--color-text-secondary);
+}
+
+.pulse-btn--ghost:hover:not(:disabled) {
+    background: var(--color-bg-card);
+    color: var(--color-text-primary);
+}
+
+/* Sizes */
+.pulse-btn--small {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--text-sm);
+}
+
+.pulse-btn--medium {
+    padding: var(--spacing-md) var(--spacing-lg);
+    font-size: var(--text-base);
+}
+
+.pulse-btn--large {
+    padding: var(--spacing-lg) var(--spacing-xl);
+    font-size: var(--text-lg);
+}
+
+/* Full Width */
+.pulse-btn--full {
+    width: 100%;
+}
+
+/* Disabled State */
+.pulse-btn--disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.pulse-btn--disabled:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+/* Icon */
+.pulse-btn__icon {
+    display: flex;
+    align-items: center;
+    font-size: 1.2em;
+}
+
+.pulse-btn__text {
+    position: relative;
+    z-index: 1;
+}

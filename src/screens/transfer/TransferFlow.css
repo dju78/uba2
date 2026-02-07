@@ -1,0 +1,57 @@
+.transfer-flow {
+    min-height: 100vh;
+    background: var(--color-bg-primary);
+}
+
+.transfer-screen {
+    max-width: 480px;
+    width: 100%;
+    margin: 0 auto;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.transfer-header {
+    padding: var(--spacing-lg) var(--spacing-md);
+    display: flex;
+    align-items: center;
+    gap: var(--spacing-md);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.back-button {
+    background: var(--color-bg-card);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all var(--transition-base);
+    font-size: var(--text-lg);
+}
+
+.back-button:hover {
+    background: var(--color-bg-card-hover);
+}
+
+.transfer-title {
+    font-size: var(--text-xl);
+    font-weight: var(--font-semibold);
+    color: var(--color-text-primary);
+}
+
+.transfer-content {
+    flex: 1;
+    padding: var(--spacing-xl) var(--spacing-md);
+    display: flex;
+    flex-direction: column;
+}
+
+.transfer-footer {
+    padding: var(--spacing-md);
+    border-top: 1px solid var(--glass-border);
+}
