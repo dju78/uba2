@@ -39,6 +39,24 @@ export default function OnboardingFlow() {
                 const pinHash = await hashPin(updatedData.pin)
                 const accountNumber = generateAccountNumber()
 
+                // Check if user already exists
+                const { data: existingUser, error: checkError } = await supabase
+                    .from('uba_users')
+                    .select('id, account_number, balance')
+                    .eq('phone_number', updatedData.phoneNumber)
+                    .maybeSingle()
+
+                if (existingUser) {
+                    // User already exists, log them in
+                    console.log('User already exists, logging in...')
+                    localStorage.setItem('uba_user_id', existingUser.id)
+                    localStorage.setItem('uba_account_number', existingUser.account_number)
+                    setLoading(false)
+                    navigate('/home')
+                    return
+                }
+
+                // Create new user
                 const { data: newUser, error: createError } = await supabase
                     .from('uba_users')
                     .insert({
